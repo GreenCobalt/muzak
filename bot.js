@@ -230,6 +230,7 @@ async function advanceQueue(guildId, force, shiftQ) {
 	}
 }
 
+/*
 async function playsearchCmd(interaction, guildId) {		
 	const voiceChannel = interaction.member.voice.channel;		
 	if (!voiceChannel) {
@@ -272,6 +273,7 @@ async function playsearchCmd(interaction, guildId) {
 	
 	delete usersearches[interaction.userId];
 }
+*/
 
 async function playCmd(interaction, guildId) {
 	var url = interaction.options.get("url-search").value;
@@ -386,17 +388,26 @@ async function playCmd(interaction, guildId) {
 			await interaction.editReply({ content: `Searching YouTube for ${url}...` });
 			
 			var videos = await youtubesearchapi.GetListByKeyword(url, false);
-			videos = videos.items.slice(0, 7)
+			//videos = videos.items.slice(0, 7)
 
-			usersearches.set(interaction.userId, videos)
+			//usersearches.set(interaction.userId, videos)
 
-			var vidstr = "";
-			for (v in videos) {
-				vidstr += `\n${parseInt(v)+1}: ${videos[v].title}`;
-			}
+			//var vidstr = "";
+			//for (v in videos) {
+			//	vidstr += `\n${parseInt(v)+1}: ${videos[v].title}`;
+			//}
 
-			await interaction.editReply({ content: `${vidstr}\n**Please use /playsearch <number> to play a video in this list.**` });
-			return;
+			//await interaction.editReply({ content: `${vidstr}\n**Please use /playsearch <number> to play a video in this list.**` });
+			//return;
+			spotifyPlaylist = false;
+			songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videos[0].id}`);
+			song = {
+				title: songInfo.videoDetails.title,
+				url: songInfo.videoDetails.video_url,
+				uploader: songInfo.videoDetails.author.name,
+				action: interaction,
+				thumb: songInfo.videoDetails.thumbnails[songInfo.videoDetails.thumbnails.length - 1].url
+			};
 		}
 	} catch (e) {
 		const embed = new MessageEmbed().setTitle('🔇 Error locating song!');
@@ -422,8 +433,8 @@ async function playCmd(interaction, guildId) {
 const commands = [
 	new SlashCommandBuilder().setName('play').setDescription('Plays a song')
 		.addStringOption(option => option.setName('url-search').setDescription('Song URL / Search Query').setRequired(true)),
-	new SlashCommandBuilder().setName('playsearch').setDescription('Plays a song from search results')
-		.addStringOption(option => option.setName('number').setDescription('Song number (in search list)').setRequired(true)),
+	//new SlashCommandBuilder().setName('playsearch').setDescription('Plays a song from search results')
+	//	.addStringOption(option => option.setName('number').setDescription('Song number (in search list)').setRequired(true)),
 	new SlashCommandBuilder().setName('skip').setDescription('Skip the current song'),
 	new SlashCommandBuilder().setName('stop').setDescription('Stop all songs'),
 	new SlashCommandBuilder().setName('queue').setDescription('List the queue'),
@@ -514,9 +525,9 @@ client.on('interactionCreate', async interaction => {
 		if (command == 'clearqueue') {
 			await clearqueueCmd(interaction, interaction.guildId);
 		}
-		if (command == 'playsearch') {
-			await playsearchCmd(interaction, interaction.guildId);
-		}
+		//if (command == 'playsearch') {
+		//	await playsearchCmd(interaction, interaction.guildId);
+		//}
     } catch (error) {
         if (error) console.error(error);
     }
