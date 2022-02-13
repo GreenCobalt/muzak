@@ -388,7 +388,7 @@ async function playCmd(interaction, guildId) {
 			await interaction.editReply({ content: `Searching YouTube for ${url}...` });
 			
 			var videos = await youtubesearchapi.GetListByKeyword(url, false);
-			//videos = videos.items.slice(0, 7)
+			videos = videos.items.slice(0, 7)
 
 			//usersearches.set(interaction.userId, videos)
 
