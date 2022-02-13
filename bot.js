@@ -450,7 +450,7 @@ setInterval(() => {
 	})
 
 	console.log(`In ${stats[1]} servers with a total of ${stats[0]} members.`)
-	client.user.setActivity(`${stats[1]} servers | ${stats[0]} members`, {"type": "WATCHING"});
+	client.user.setActivity(`${stats[1]} servers`, {"type": "WATCHING"});
 }, 5000);
 
 client.once('ready', () => {
