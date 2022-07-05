@@ -388,8 +388,7 @@ async function playCmd(interaction, guildId) {
 			await interaction.editReply({ content: `Searching YouTube for ${url}...` });
 			
 			var videos = await youtubesearchapi.GetListByKeyword(url, false);
-			videos = videos.items.slice(0, 7)
-
+			videos = videos.items.slice(0, 7);
 			//usersearches.set(interaction.userId, videos)
 
 			//var vidstr = "";
@@ -399,8 +398,15 @@ async function playCmd(interaction, guildId) {
 
 			//await interaction.editReply({ content: `${vidstr}\n**Please use /playsearch <number> to play a video in this list.**` });
 			//return;
+			
 			spotifyPlaylist = false;
-			songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videos[0].id}`);
+			songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videos[0].id}`, {
+				requestOptions: {
+				  headers: {
+					cookie: "VISITOR_INFO1_LIVE=ICtLLZzaUn4;"
+				  }
+				}
+			});
 			song = {
 				title: songInfo.videoDetails.title,
 				url: songInfo.videoDetails.video_url,
@@ -412,7 +418,7 @@ async function playCmd(interaction, guildId) {
 	} catch (e) {
 		const embed = new MessageEmbed().setTitle('🔇 Error locating song!');
 		const messageId = await interaction.editReply({ embeds: [ embed ] });
-		console.log(e)
+		console.log(e);
 		return;
 	}
 	
@@ -449,7 +455,7 @@ setInterval(() => {
 		stats[1]++;
 	})
 
-	console.log(`In ${stats[1]} servers with a total of ${stats[0]} members.`)
+	//console.log(`In ${stats[1]} servers with a total of ${stats[0]} members.`)
 	client.user.setActivity(`${stats[1]} servers`, {"type": "WATCHING"});
 }, 5000);
 
