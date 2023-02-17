@@ -1,9 +1,12 @@
 ﻿require('dotenv').config()
 const { 
 	Client, 
-	Intents, 
-	MessageEmbed
-} = 								require('discord.js');
+	GatewayIntentBits,
+	EmbedBuilder,
+	SlashCommandBuilder,
+	REST,
+	Routes
+} = 							require('discord.js');
 const { 
 	joinVoiceChannel, 
 	createAudioPlayer, 
@@ -11,20 +14,18 @@ const {
 	entersState, 
 	AudioPlayerStatus, 
 	VoiceConnectionStatus
-} = 								require('@discordjs/voice');
-const { SlashCommandBuilder } = 	require('@discordjs/builders');
-const { REST } = 					require('@discordjs/rest');
-const { Routes } = 					require('discord-api-types/v9');
-const ytdl = 						require("ytdl-core");
-const spdl = 						require("spdl-core");
-const youtubesearchapi = 			require('youtube-search-api');
-const SpotifyWebApi = 				require('spotify-web-api-node');
-const spotifyUri = 					require('spotify-uri');
-const SpotifyToYoutube = 			require('spotify-to-youtube');
+} = 							require('@discordjs/voice');
+const ytdl = 					require("ytdl-core");
+const spdl = 					require("spdl-core");
+const youtubesearchapi = 		require('youtube-search-api');
+const SpotifyWebApi = 			require('spotify-web-api-node');
+const spotifyUri = 				require('spotify-uri');
+const SpotifyToYoutube = 		require('spotify-to-youtube');
+require("libsodium-wrappers");
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_VOICE_STATES] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates] });
 
-const TOKEN = process.env['TOKEN'];
+const TOKEN = process.env['token'];
 const TEST_GUILD_ID = process.env['TEST_GUILD_ID'];
 
 const spotifyApi = new SpotifyWebApi({
@@ -116,7 +117,12 @@ async function playSongToConnection(connection, song, guildId) {
 		console.log(`Playing ${song.title}`)
 		const player = players.get(guildId);
 
-		const embed = new MessageEmbed().addField(`🎵  Now Playing:`, `**Title**: ${song.title}\n**Author:** ${song.uploader}\n**Requested By:** ${song.action.user.username}#${song.action.user.discriminator}`, false).setThumbnail(song.thumb);
+		const embed = new EmbedBuilder().addFields([
+			{
+				name: `🎵  Now Playing:`,
+				value: `**Title**: ${song.title}\n**Author:** ${song.uploader}\n**Requested By:** ${song.action.user.username}#${song.action.user.discriminator}`
+			}])
+			.setThumbnail(song.thumb);
 		await song.action.followUp({ embeds: [ embed ] });
 
 		const result = await createAudio(song.url);
@@ -191,14 +197,14 @@ async function queueCmd(interaction, guildId) {
 async function skipCmd(interaction, guildId) {
 	var serverQueue = queues.get(guildId);
 	if (!serverQueue || serverQueue.length < 2) {
-		const embed = new MessageEmbed().setTitle('🔇 There are no more songs in the queue!');
+		const embed = new EmbedBuilder().setTitle('🔇 There are no more songs in the queue!');
 		const messageId = await interaction.editReply({ embeds: [ embed ] });
 
 		stopPlaying(connections.get(guildId), guildId)
 		return;
 	}
 
-	const embed = new MessageEmbed().setTitle(`⏭️ Skipped song!`);
+	const embed = new EmbedBuilder().setTitle(`⏭️ Skipped song!`);
 	await interaction.editReply({ embeds: [ embed ] });
 
 	advanceQueue(guildId, true, true);
@@ -208,7 +214,7 @@ async function stopCmd(interaction, guildId) {
 	const conn = connections.get(guildId)
 	await stopPlaying(conn, guildId)
 
-	const embed = new MessageEmbed().setTitle('🔇 Stopped playing!');
+	const embed = new EmbedBuilder().setTitle('🔇 Stopped playing!');
 	const messageId = await interaction.editReply({ embeds: [ embed ] });
 }
 
@@ -230,64 +236,19 @@ async function advanceQueue(guildId, force, shiftQ) {
 	}
 }
 
-/*
-async function playsearchCmd(interaction, guildId) {		
-	const voiceChannel = interaction.member.voice.channel;		
-	if (!voiceChannel) {
-		const embed = new MessageEmbed().setTitle('🔇 You need to be in a voice channel to play music!');
-		const messageId = await interaction.editReply({ embeds: [ embed ] });
-		return;
-	}
-
-	const search = usersearches.get(interaction.userId)
-	if (search == undefined) {
-		const embed = new MessageEmbed().setTitle('🔇 Please search something before using this command!');
-		const messageId = await interaction.editReply({ embeds: [ embed ] });
-		return;
-	}
-	var serverQueue = queues.get(guildId);
-
-	const num = parseInt(interaction.options.get("number").value) - 1;
-	var vid = search[num]
-
-	songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${vid.id}`);
-	song = {
-		title: songInfo.videoDetails.title,
-		url: songInfo.videoDetails.video_url,
-		uploader: songInfo.videoDetails.author.name,
-		action: interaction,
-		thumb: songInfo.videoDetails.thumbnails[songInfo.videoDetails.thumbnails.length - 1].url
-	};
-
-	if (!serverQueue) {
-		serverQueue = []
-	}
-	serverQueue.push(song);
-	queues.set(guildId, serverQueue)
-	
-	const embed = new MessageEmbed().addField(`🎶  Added song to queue!`, `**Title**: ${song.title}\n**Author:** ${song.uploader}\n**Requested By:** ${song.action.user.username}#${song.action.user.discriminator}`, false).setThumbnail(song.thumb);
-	await interaction.editReply({ embeds: [ embed ] });
-	
-	const conn = await joinVC(voiceChannel);
-	await advanceQueue(guildId, false, false)
-	
-	delete usersearches[interaction.userId];
-}
-*/
-
 async function playCmd(interaction, guildId) {
 	var url = interaction.options.get("url-search").value;
 	var serverQueue = queues.get(guildId);
 	const voiceChannel = interaction.member.voice.channel;		
 	if (!voiceChannel) {
-		const embed = new MessageEmbed().setTitle('🔇 You need to be in a voice channel to play music!');
+		const embed = new EmbedBuilder().setTitle('🔇 You need to be in a voice channel to play music!');
 		const messageId = await interaction.editReply({ embeds: [ embed ] });
 		return;
 	}
 	
 	const permissions = voiceChannel.permissionsFor(interaction.client.user);
 	if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-		const embed = new MessageEmbed().setTitle('🔇 I need the permissions to join and speak in the voice channel you\'re in!');
+		const embed = new EmbedBuilder().setTitle('🔇 I need the permissions to join and speak in the voice channel you\'re in!');
 		const messageId = await interaction.editReply({ embeds: [ embed ] });
 		return;
 	}
@@ -329,7 +290,7 @@ async function playCmd(interaction, guildId) {
 	
 			song = newSong;
 		} else if (spdl.validateURL(url, 'playlist')) {
-			embed = new MessageEmbed().addField(`Importing songs from playlist`, `This might take a while...`, false);
+			embed = new EmbedBuilder().addFields([{name:`Importing songs from playlist`,value:`This might take a while...`}]);
 			interaction.editReply({ embeds: [ embed ] })
 
 			var parsed = spotifyUri.parse(url);
@@ -337,7 +298,7 @@ async function playCmd(interaction, guildId) {
 			try {
 				var data = await spotifyApi.getPlaylist(parsed.id);
 			} catch (WebapiRegularError) {
-				embed = new MessageEmbed().addField(`Could not import playlist.`, `**Is the playlist private?**`, false);
+				embed = new EmbedBuilder().addFields([{name:`Could not import playlist.`,value:`**Is the playlist private?**`}]);
 				interaction.editReply({ embeds: [ embed ] })
 			}
 
@@ -369,7 +330,7 @@ async function playCmd(interaction, guildId) {
 							song: songArr
 						}
 
-						embed = new MessageEmbed().addField(`🎶  Added playlist to queue!`, `Done`, false);
+						embed = new EmbedBuilder().addFields([{name:`🎶  Added playlist to queue!`,value:`Done`}]);
 						
 						songArr.forEach(s => {
 							serverQueue.push(s);
@@ -387,20 +348,9 @@ async function playCmd(interaction, guildId) {
 		} else {
 			await interaction.editReply({ content: `Searching YouTube for ${url}...` });
 			
-			var videos = await youtubesearchapi.GetListByKeyword(url, false);
-			videos = videos.items.slice(0, 7);
-			//usersearches.set(interaction.userId, videos)
-
-			//var vidstr = "";
-			//for (v in videos) {
-			//	vidstr += `\n${parseInt(v)+1}: ${videos[v].title}`;
-			//}
-
-			//await interaction.editReply({ content: `${vidstr}\n**Please use /playsearch <number> to play a video in this list.**` });
-			//return;
-			
+			var videos = await youtubesearchapi.GetListByKeyword(url, false);		
 			spotifyPlaylist = false;
-			songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videos[0].id}`, {
+			songInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videos.items[0].id}`, {
 				requestOptions: {
 				  headers: {
 					cookie: "VISITOR_INFO1_LIVE=ICtLLZzaUn4;"
@@ -416,7 +366,7 @@ async function playCmd(interaction, guildId) {
 			};
 		}
 	} catch (e) {
-		const embed = new MessageEmbed().setTitle('🔇 Error locating song!');
+		const embed = new EmbedBuilder().setTitle('🔇 Error locating song!');
 		const messageId = await interaction.editReply({ embeds: [ embed ] });
 		console.log(e);
 		return;
@@ -424,7 +374,14 @@ async function playCmd(interaction, guildId) {
 	
 	var embed;
 	if (spotifyPlaylist) {} else {
-		embed = new MessageEmbed().addField(`🎶  Added song to queue!`, `**Title**: ${song.title}\n**Author:** ${song.uploader}\n**Requested By:** ${song.action.user.username}#${song.action.user.discriminator}`, false).setThumbnail(song.thumb);
+		embed = new EmbedBuilder()
+			.addFields([
+				{
+					name: `🎶  Added song to queue!`,
+					value: `**Title**: ${song.title}\n**Author:** ${song.uploader}\n**Requested By:** ${song.action.user.username}#${song.action.user.discriminator}`
+				}
+			])
+			.setThumbnail(song.thumb);
 	
 		serverQueue.push(song);
 		queues.set(guildId, serverQueue)
