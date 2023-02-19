@@ -25,7 +25,7 @@ require("libsodium-wrappers");
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates] });
 
-const TOKEN = process.env['token'];
+const TOKEN = process.env.TOKEN;
 const TEST_GUILD_ID = process.env['TEST_GUILD_ID'];
 
 const spotifyApi = new SpotifyWebApi({
