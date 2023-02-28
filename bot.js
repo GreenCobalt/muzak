@@ -100,7 +100,7 @@ async function createAudio(url) {
 	try {
 		var res = undefined;
 		if (ytdl.validateURL(url)) {
-			res = await createAudioResource(await ytdl(url, { filter: 'audio', quality: 'lowestaudio' }));
+			res = await createAudioResource(await ytdl(url, { highWaterMark: 16000000 }));
 		}
 	} catch (e) {
 		console.error(e);
