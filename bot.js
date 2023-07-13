@@ -111,15 +111,6 @@ async function joinVC(voiceChannel) {
 		});
 		player.on(AudioPlayerStatus.Idle, f => {
 			console.log('idle');
-			if (
-				f.status == 'playing' &&
-				f.playbackDuration > f.resource.playbackDuration
-			) {
-				console.log('Song over, Advancing queue...');
-				setTimeout(() => {
-					advanceQueue(voiceChannel.guild.id, true, true);
-				}, 250);
-			}
 		});
 		players.set(voiceChannel.guild.id, player);
 
@@ -180,6 +171,7 @@ async function playSongToGuild(song, guildId) {
 
 		result.playStream.on('end', end => {
 			setTimeout(() => {
+				console.log('Song over, Advancing queue...');
 				advanceQueue(guildId, true, true);
 			}, 250);
 		});
