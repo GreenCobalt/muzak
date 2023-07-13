@@ -512,7 +512,7 @@ const commands = [
 	new SlashCommandBuilder().setName('np').setDescription('Alias of /queue')
 ];
 
-setInterval(() => {
+function updateStats() {
 	var stats = [0, 0];
 	client.guilds.cache.forEach(guild => {
 		stats[0] += guild.memberCount;
@@ -537,10 +537,12 @@ setInterval(() => {
 		.catch((error) => {
 			console.log(`Failed to send stats to mananger: ${error}`);
 		});
-}, 30 * 1000);
+}
+setInterval(updateStats, 30 * 1000);
 
 client.once('ready', () => {
 	console.log('Ready!');
+	updateStats();
 	const CLIENT_ID = client.user.id;
 	const rest = new REST({ version: '9' }).setToken(TOKEN)
 		; (async () => {
