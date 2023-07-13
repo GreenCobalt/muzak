@@ -1,5 +1,4 @@
-﻿require('dotenv').config();
-const {
+﻿const {
 	Client,
 	GatewayIntentBits,
 	EmbedBuilder,
@@ -16,13 +15,17 @@ const {
 	AudioPlayerStatus,
 	VoiceConnectionStatus
 } = require('@discordjs/voice');
+
 const ytdl = require('ytdl-core');
 const spdl = require('spdl-core');
 const youtubesearchapi = require('youtube-search-api');
 const SpotifyWebApi = require('spotify-web-api-node');
 const spotifyUri = require('spotify-uri');
 const SpotifyToYoutube = require('spotify-to-youtube');
+const axios = require('axios');
+
 require('libsodium-wrappers');
+require('dotenv').config();
 
 const client = new Client({
 	intents: [
