@@ -32,6 +32,8 @@ const client = new Client({
 	]
 });
 
+let upSince = Date.now();
+
 const TOKEN = process.env.TOKEN;
 const TEST_GUILD_ID = process.env['TEST_GUILD_ID'];
 
@@ -516,12 +518,26 @@ setInterval(() => {
 		stats[0] += guild.memberCount;
 		stats[1]++;
 	});
-	//console.log("updating stats", stats);
+
 	client.user.setPresence({
 		activities: [{ name: `${stats[1]} servers`, type: ActivityType.Watching }],
 		status: 'online',
 	});
-}, 5000);
+
+	axios.post('https://manager.snadol.com/api', {
+		type: "botsIn",
+		auth: "abc123",
+		bot: "muzak",
+		uid: client.user.id,
+		members: stats[0],
+		servers: stats[1],
+		upsince: upSince
+	}, { headers: { 'content-type': 'application/json' } })
+		.then((res) => { })
+		.catch((error) => {
+			console.log(`Failed to send stats to mananger: ${error}`);
+		});
+}, 30 * 1000);
 
 client.once('ready', () => {
 	console.log('Ready!');
