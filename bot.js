@@ -5,7 +5,8 @@ const {
 	EmbedBuilder,
 	SlashCommandBuilder,
 	REST,
-	Routes
+	Routes,
+	ActivityType
 } = require('discord.js');
 const {
 	joinVoiceChannel,
@@ -515,7 +516,11 @@ setInterval(() => {
 		stats[0] += guild.memberCount;
 		stats[1]++;
 	});
-	client.user.setActivity(`${stats[1]} servers`, { type: 'WATCHING' });
+	//console.log("updating stats", stats);
+	client.user.setPresence({
+		activities: [{ name: `${stats[1]} servers`, type: ActivityType.Watching }],
+		status: 'online',
+	});
 }, 5000);
 
 client.once('ready', () => {
