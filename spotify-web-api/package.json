@@ -1,0 +1,16 @@
+{
+  "name": "spotify-web-api",
+  "version": "5.0.2",
+  "homepage": "https://github.com/thelinmichael/spotify-web-api-node",
+  "description": "A Node.js wrapper for Spotify's Web API",
+  "main": "./src/server.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thelinmichael/spotify-web-api-node.git"
+  },
+  "scripts": {},
+  "dependencies": {
+    "superagent": "^8.0.9"
+  }
+}
