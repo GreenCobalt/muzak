@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@discordjs/voice": "^0.16.0",
-    "axios": "^1.6.0",
+    "axios": "^1.7.4",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "get-audio-duration": "^3.1.1",
