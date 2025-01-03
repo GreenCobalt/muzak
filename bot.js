@@ -14,6 +14,8 @@ const {
 	joinVoiceChannel,
 	createAudioPlayer,
 	createAudioResource,
+	StreamType,
+	demuxProbe,
 	entersState,
 	AudioPlayerStatus,
 	VoiceConnectionStatus,
@@ -27,7 +29,8 @@ const crypto = require('crypto');
 const fs = require("fs");
 const http = require('https');
 
-const ytdl = require('ytdl-core');
+const ytdl = require('@distube/ytdl-core');
+//const ytdl = require('ytdl-core-discord');
 global.AbortController = require("node-abort-controller").AbortController;
 
 const SPAPI = require('./spotify-web-api');
@@ -205,30 +208,30 @@ async function joinVC(voiceChannel) {
 		return connections.get(voiceChannel.guild.id);
 	}
 }
-function createAudio(song) {
-	return new Promise((res, rej) => {
-		if (song.source == "youtube") {
-			if (song.url.startsWith('https') && ytdl.validateURL(song.url)) {
-				ytdl.getBasicInfo(song.url).then((info) => {
-					let format = ['258', '251', '256', '140', '250', '249', '139', '600', '599'].filter(value => info.formats.map((format) => { return format.itag.toString(); }).includes(value))[0];
-					console.log(`[YTDL ] creating ytdl instance for ${song.url}, quality ${format} (${audioFormats[format].codec}@${audioFormats[format].bitrate.includes("vbr") ? "~" : ""}${audioFormats[format].bitrate.split("-")[0]}kbps in ${audioFormats[format].container})`);
-					let ytdlInst = ytdl(song.url, { quality: format, highWaterMark: 1 << 25 }).on("error", (e) => { return false; });
-					let dlProg = [0, 0];
-					ytdlInst.on('response', (res) => { dlProg[0] = res.headers['content-length']; });
-					ytdlInst.on('progress', (progress) => { dlProg[1] += progress; if (dlProg[1] / dlProg[0] == 1) { console.log(`[YTDL ] fully buffered from youtube (size ${Math.round(dlProg[0] / 1000 / 1000, 2)}MB)`); } });
-					res(createAudioResource(ytdlInst));
-				}).catch((err) => {
-					handleErr(err);
-				});
-			}
-		} else if (song.source == "web") {
-			http.get(song.url, function (_res) {
-				res(createAudioResource(_res));
+async function createAudio(song) {
+	if (song.source == "youtube") {
+		if (song.url.startsWith('https') && ytdl.validateURL(song.url)) {
+			let info = await ytdl.getBasicInfo(song.url); //.then((info) => {
+			let format = ['258', '251', '256', '140', '250', '249', '139', '600', '599'].filter(value => info.player_response.streamingData.adaptiveFormats.map((format) => { return format.itag.toString(); }).includes(value))[0];
+			console.log(`[YTDL ] creating ytdl instance for ${song.url}, quality ${format} (${audioFormats[format].codec}@${audioFormats[format].bitrate.includes("vbr") ? "~" : ""}${audioFormats[format].bitrate.split("-")[0]}kbps in ${audioFormats[format].container})`);
+
+			let stream = await ytdl(song.url, {
+				highWaterMark: 1 << 25,
+				// format: format
+				filter: "audioonly"
 			});
-		} else {
-			rej("unknown source");
+			return createAudioResource(stream);
 		}
-	});
+	}
+	/*
+	else if (song.source == "web") {
+		http.get(song.url, function (_res) {
+			res(createAudioResource(_res));
+		});
+	*/
+	else {
+		throw("unknown source");
+	}
 }
 
 async function playSongToGuild(song, guildId) {
@@ -247,20 +250,21 @@ async function playSongToGuild(song, guildId) {
 			console.log(`[SYS  ] error in sending song play message in guild ${guildId}`);
 			playingEmbed = false;
 		}
-		createAudio(song).then((songAudio) => {
-			if (!songAudio) {
-				if (playingEmbed) playingEmbed.reply({ embeds: [new EmbedBuilder().setColor(0xFF0000).setTitle("⛔ Song is not available!")] }).then(() => {
-					advanceQueue(guildId, true, true);
-					return;
-				});
-			}
 
-			player.play(songAudio);
-			songAudio.playStream.on('end', end => {
-				setTimeout(() => {
-					advanceQueue(guildId, true, true);
-				}, 250);
+		let songAudio = await createAudio(song); //.then((songAudio) => {
+
+		if (!songAudio) {
+			if (playingEmbed) playingEmbed.reply({ embeds: [new EmbedBuilder().setColor(0xFF0000).setTitle("⛔ Song is not available!")] }).then(() => {
+				advanceQueue(guildId, true, true);
+				return;
 			});
+		}
+
+		player.play(songAudio);
+		songAudio.playStream.on('end', end => {
+			setTimeout(() => {
+				advanceQueue(guildId, true, true);
+			}, 250);
 		});
 	} catch (e) {
 		console.error(e);

@@ -1,15 +1,17 @@
 {
   "dependencies": {
+    "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.0",
-    "axios": "^1.7.4",
+    "@distube/ytdl-core": "^4.15.6",
+    "axios": "^1.4.0",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "get-audio-duration": "^3.1.1",
     "libsodium-wrappers": "^0.7.11",
     "node-abort-controller": "^3.1.1",
+    "node-opus": "^0.3.3",
     "spdl-core": "^2.0.2",
     "spotify-uri": "^3.0.3",
-    "superagent": "^8.0.9",
-    "ytdl-core": "^4.11.5"
+    "superagent": "^8.0.9"
   }
 }
