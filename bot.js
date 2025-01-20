@@ -245,7 +245,7 @@ async function playSongToGuild(song, guildId) {
 		const player = players.get(guildId);
 		let playingEmbed;
 		try {
-			playingEmbed = await song.action.channel.send({ embeds: [new EmbedBuilder().setColor(0x0000FF).addFields([{ name: `🎵  Now Playing:`, value: `**Title**: ${song.title}\n**Uploader:** ${song.uploader}\n**Requested By:** ${song.action.user.username}#${song.action.user.discriminator}` }]).setThumbnail(song.thumb)] });
+			playingEmbed = await song.action.channel.send({ embeds: [new EmbedBuilder().setColor(0x0000FF).addFields([{ name: `🎵  Now Playing:`, value: `**Title**: ${song.title}\n**Uploader:** ${song.uploader}\n**Requested By:** ${song.action.user.username}#${song.action.user.discriminator}\n**Length:** ${msToMS(song.length)}` }]).setThumbnail(song.thumb)] });
 		} catch (e) {
 			console.log(`[SYS  ] error in sending song play message in guild ${guildId}`);
 			playingEmbed = false;
@@ -412,7 +412,7 @@ async function playCmd(interaction, guildId) {
 			interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x00FF00).addFields([{ name: `🎶  Added playlist to queue!`, value: `Done${(serverQueue.length > maxQueueLen ? ` - Queue length was limited to ${maxQueueLen} songs` : "")}` }])] });
 			console.log(`[QUEUE] added ${tracks.results.length} songs to queue for server ${guildId}`);
 		} else {
-			interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x00FF00).addFields([{ name: `🎶  Added song to queue!`, value: `**Title**: ${tracks.results[0].title}\n**Uploader:** ${tracks.results[0].uploader}\n**Requested By:** ${tracks.results[0].action.user.username}#${tracks.results[0].action.user.discriminator}` }]).setThumbnail(tracks.results[0].thumb)] });
+			interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x00FF00).addFields([{ name: `🎶  Added song to queue!`, value: `**Title**: ${tracks.results[0].title}\n**Uploader:** ${tracks.results[0].uploader}\n**Requested By:** ${tracks.results[0].action.user.username}#${tracks.results[0].action.user.discriminator}\n**Length:** ${msToMS(tracks.results[0].length)}` }]).setThumbnail(tracks.results[0].thumb)] });
 			console.log(`[QUEUE] added ${tracks.results[0].title} to the queue for server ${guildId}`);
 		}
 
