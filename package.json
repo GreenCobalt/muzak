@@ -3,7 +3,7 @@
     "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.16.0",
     "@distube/ytdl-core": "^4.16.12",
-    "axios": "^1.4.0",
+    "axios": "^1.13.5",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "get-audio-duration": "^3.1.1",
